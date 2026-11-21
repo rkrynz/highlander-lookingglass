@@ -3,7 +3,9 @@ const input = document.getElementById("urlInput");
 const button = document.getElementById("scanButton");
 const results = document.getElementById("results");
 
-// Check whether a hostname belongs to an official domain
+let activeController = null;
+
+// Calculate similarity between two names
 function editDistance(a, b) {
     const dp = [];
 
@@ -30,205 +32,203 @@ function editDistance(a, b) {
     return dp[a.length][b.length];
 }
 
+// Check exact domain or legitimate subdomain
 function isOfficialDomain(hostname, domain) {
     return hostname === domain ||
            hostname.endsWith("." + domain);
 }
 
-// Scan the URL for suspicious signs
-function scanURL(inputText) {
-    let url;
+// Normalize lookalike characters
+function normalizeName(name) {
+    return name.toLowerCase()
+        .replace(/-/g, "")
+        .replace(/0/g, "o")
+        .replace(/1/g, "l");
+}
 
-    // Step 1: Validate URL
-    
+// Parse and validate a website URL
+function parseURL(inputText) {
+    const text = inputText.trim();
+
+    if (!text || text.length > 2048) {
+        return null;
+    }
+
     try {
-        let cleanedInput = inputText.trim();
+        const value = text.includes("://")
+            ? text
+            : "https://" + text;
 
-        // Automatically add https:// if no protocol is provided
-        if (!cleanedInput.includes("://")) {
-            cleanedInput = "https://" + cleanedInput;
+        const url = new URL(value);
+
+        if (url.protocol !== "http:" &&
+            url.protocol !== "https:") {
+            return null;
         }
 
-        url = new URL(cleanedInput);
+        if (!url.hostname.includes(".") &&
+            url.hostname !== "localhost") {
+            return null;
+        }
+
+        return url;
     } catch {
+        return null;
+    }
+}
 
-        return {
-            type: "error",
-            message: "Please enter a valid link starting with https://"
-        };
+// Identify impersonation patterns
+function isBrandImpersonation(hostname, domain, keyword, registeredName) {
+    if (isOfficialDomain(hostname, domain)) {
+        return false;
     }
 
-    if (url.protocol !== "http:" && url.protocol !== "https:") {
-        return {
-            type: "error",
-            message: "Please enter a website link."
-        };
+    const normalized = normalizeName(registeredName);
+    const normalizedKeyword = normalizeName(keyword);
+
+    // Exact brand name on another domain
+    if (normalized === normalizedKeyword) {
+        return true;
     }
 
-    // Step 2: Identify the actual domain
-    const hostname = url.hostname.toLowerCase();
+    // Common phishing additions
+    const suspiciousWords = [
+        "login",
+        "secure",
+        "verify",
+        "account",
+        "support",
+        "signin",
+        "password"
+    ];
+
+    for (const word of suspiciousWords) {
+        if (normalized === normalizedKeyword + word ||
+            normalized === word + normalizedKeyword) {
+            return true;
+        }
+    }
+
+    // One-character brand typos
+    if (normalized !== normalizedKeyword &&
+        editDistance(normalized, normalizedKeyword) <= 1) {
+        return true;
+    }
+
+    // Detect official-looking domains hidden in subdomains
+    if (hostname.includes(domain + ".")) {
+        return true;
+    }
+
+    return false;
+}
+
+// Scan for suspicious URL patterns
+function scanURL(inputText) {
+    const url = parseURL(inputText);
+
+    if (!url) {
+        return {
+            type: "error",
+            message: "Please enter a valid website URL."
+        };
+    }
 
     if (typeof tldts === "undefined") {
         return {
             type: "error",
-            message:
-                "The domain checker could not load.\n" +
-                "Please refresh the page and try again."
+            message: "Domain checker unavailable. Please refresh."
         };
     }
 
+    const hostname = url.hostname.toLowerCase();
     const parsedDomain = tldts.parse(hostname);
     const destination = parsedDomain.domain || hostname;
     const domainName = destination.split(".")[0];
 
     const warnings = [];
 
+    // HTTP warning
     if (url.protocol === "http:") {
         warnings.push(
-            "This link uses HTTP instead of HTTPS. " +
+            "This website uses HTTP instead of HTTPS. " +
             "Your connection may not be encrypted."
         );
     }
 
-    // Step 3: Detect UCR impersonation
+    // UCR impersonation
     const isUCR = isOfficialDomain(hostname, "ucr.edu");
 
-    const ucrLookalikes = [
-        "ucrr",
+    const ucrPatterns = [
+        "ucr",
         "uc-r",
-        "ucr-login",
-        "ucrportal",
-        "myucr",
-        "rweb-ucr",
-        "ucrsecure"
+        "rweb"
     ];
 
-    const isLookalike = ucrLookalikes.some(function(name) {
-        return domainName.includes(name);
+    const looksLikeUCR = ucrPatterns.some(function(pattern) {
+        return hostname.includes(pattern);
     });
 
-    const hasUCRName =
-        hostname.includes("ucr") ||
-        hostname.includes("uc-r") ||
-        hostname.includes("rweb");
-
-    if (!isUCR && (isLookalike || hasUCRName)) {
+    if (!isUCR && looksLikeUCR) {
         warnings.push(
-            "This website may be pretending to be UCR. " +
+            "This website may be impersonating UC Riverside. " +
             "Official UCR websites use ucr.edu."
         );
     }
 
-    // Step 4: Detect other brand impersonation
+    // Other brand impersonation
     const brands = [
-        {
-            name: "Amazon",
-            domain: "amazon.com",
-            keyword: "amazon"
-        },
-        {
-            name: "PayPal",
-            domain: "paypal.com",
-            keyword: "paypal"
-        },
-        {
-            name: "Microsoft",
-            domain: "microsoft.com",
-            keyword: "microsoft"
-        }
+        { name: "Amazon", domain: "amazon.com", keyword: "amazon" },
+        { name: "PayPal", domain: "paypal.com", keyword: "paypal" },
+        { name: "Microsoft", domain: "microsoft.com", keyword: "microsoft" }
     ];
 
     brands.forEach(function(brand) {
-        const isOfficial = isOfficialDomain(
+        if (isBrandImpersonation(
             hostname,
-            brand.domain
-        );
-        
-    const simplifiedHost = domainName
-        .toLowerCase()
-        .replace(/-/g, "")
-        .replace(/0/g, "o")
-        .replace(/1/g, "l");
-
-
-        const hasBrandName =
-            simplifiedHost.includes(brand.keyword);
-        
-        const registeredName = destination
-            .split(".")[0]
-            .replace(/-/g, "")
-            .replace(/0/g, "o")
-            .replace(/1/g, "l");
-
-        const isCloseMatch =
-            registeredName !== brand.keyword &&
-            editDistance(registeredName, brand.keyword) <= 1;
-
-
-        const isFakeAmazon =
-            brand.name === "Amazon" &&
-            simplifiedHost.includes("amazoon");
-
-        
-        if (
-            !isOfficial &&
-            (
-                simplifiedHost === brand.keyword ||
-                simplifiedHost.startsWith(brand.keyword + "login") ||
-                simplifiedHost.startsWith(brand.keyword + "secure") ||
-                isFakeAmazon ||
-                isCloseMatch
-            )
-        ) {
+            brand.domain,
+            brand.keyword,
+            domainName
+        )) {
             warnings.push(
-                "This link may be pretending to be " +
+                "This website may be impersonating " +
                 brand.name + "."
             );
         }
     });
 
-    // Step 5: Check for other suspicious signs
+    // Hidden destination using @
     if (url.username || url.password) {
         warnings.push(
-            "This link may be hiding its real destination " +
-            "using an @ symbol."
+            "This URL contains login information before an @ symbol, " +
+            "which can disguise the destination."
         );
     }
 
-    if (url.protocol === "http:") {
-        warnings.push(
-            "This website does not use HTTPS."
-        );
-    }
-
+    // Punycode
     if (hostname.includes("xn--")) {
         warnings.push(
-            "This link contains unusual characters " +
-            "that could disguise a website name."
+            "This domain contains encoded characters that " +
+            "could be used to imitate another website."
         );
     }
 
-    // Step 6: Show easy-to-understand results
     if (warnings.length > 0) {
         return {
             type: "warning",
             message:
-                "⚠️ BE CAREFUL — SUSPICIOUS LINK\n\n" +
-                "We found " + warnings.length +
-                " warning sign(s).\n\n" +
-
+                "⚠️ SUSPICIOUS LINK\n\n" +
+                "Found " + warnings.length + " warning sign(s).\n\n" +
                 "WHY WE FLAGGED IT:\n" +
                 warnings.map(function(warning) {
                     return "• " + warning;
                 }).join("\n") +
-
-                "\n\nWHERE THIS LINK GOES:\n" +
+                "\n\nACTUAL DOMAIN:\n" +
                 destination +
-
-                "\n\nWHAT YOU SHOULD DO:\n" +
-                "• Don't open this link.\n" +
-                "• Don't enter your password.\n" +
-                "• Visit the official website yourself.\n" +
+                "\n\nRECOMMENDED ACTIONS:\n" +
+                "• Avoid opening this link.\n" +
+                "• Never enter your password on an unverified website.\n" +
+                "• Visit the official website directly.\n" +
                 "• Report suspicious UCR emails to abuse@ucr.edu."
         };
     }
@@ -238,14 +238,12 @@ function scanURL(inputText) {
             type: "caution",
             message:
                 "🔎 OFFICIAL UCR DOMAIN\n\n" +
-                "This link points to a ucr.edu website.\n\n" +
-
+                "This URL belongs to the ucr.edu domain.\n\n" +
                 "WEBSITE:\n" +
                 hostname +
-
                 "\n\nREMEMBER:\n" +
                 "An official domain does not guarantee " +
-                "that every page or link is safe."
+                "that every page is safe."
         };
     }
 
@@ -253,21 +251,21 @@ function scanURL(inputText) {
         type: "caution",
         message:
             "🔎 NO OBVIOUS WARNING SIGNS\n\n" +
-            "We didn't find anything suspicious " +
-            "using our basic checks.\n\n" +
-
-            "WEBSITE:\n" +
+            "No suspicious patterns were detected " +
+            "by our basic URL checks.\n\n" +
+            "DOMAIN:\n" +
             destination +
-
             "\n\nREMEMBER:\n" +
-            "This link has not been verified as safe.\n" +
-            "Be careful with passwords and personal information."
+            "This does not guarantee the website is safe."
     };
 }
 
-// Display the result
-
+// Display scan results and check Google Safe Browsing
 async function checkLink() {
+    if (button.disabled) {
+        return;
+    }
+
     const result = scanURL(input.value);
 
     results.className = result.type;
@@ -277,11 +275,12 @@ async function checkLink() {
         return;
     }
 
-    let url = input.value.trim();
+    const url = parseURL(input.value);
 
-    if (!url.includes("://")) {
-        url = "https://" + url;
-    }
+    activeController = new AbortController();
+
+    button.disabled = true;
+    button.textContent = "Scanning...";
 
     results.textContent += "\n\nChecking Google's threat database...";
 
@@ -291,7 +290,8 @@ async function checkLink() {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ url: url })
+            body: JSON.stringify({ url: url.href }),
+            signal: activeController.signal
         });
 
         if (!response.ok) {
@@ -302,27 +302,39 @@ async function checkLink() {
 
         if (data.flagged) {
             results.className = "warning";
-            results.textContent = "🚨 KNOWN DANGEROUS LINK\n\n" +
-                "Google Safe Browsing has identified this link as a threat.\n\n" +
-                "Do not visit this website or enter personal information.";
+            results.textContent =
+                "🚨 KNOWN DANGEROUS LINK\n\n" +
+                "Google Safe Browsing identified this URL " +
+                "as a known threat.\n\n" +
+                "Do not visit this website or enter personal information.\n\n" +
+                "LOCAL URL CHECK:\n" +
+                result.message;
         } else {
-            results.textContent = result.message +
+            results.textContent =
+                result.message +
                 "\n\nGOOGLE SAFE BROWSING:\n" +
                 "No known threat was found in Google's database.\n" +
-                "This does not guarantee the link is safe.";
+                "This does not guarantee the website is safe.";
         }
     } catch (error) {
-        results.textContent = result.message +
-            "\n\nGOOGLE SAFE BROWSING:\n" +
-            "Reputation check unavailable. Only basic checks were completed.";
+        if (error.name !== "AbortError") {
+            results.textContent =
+                result.message +
+                "\n\nGOOGLE SAFE BROWSING:\n" +
+                "Reputation check unavailable. " +
+                "Only basic URL checks were completed.";
+        }
+    } finally {
+        button.disabled = false;
+        button.textContent = "Check Link";
+        activeController = null;
     }
 }
 
-
-// Scan when button is clicked
+// Scan button
 button.addEventListener("click", checkLink);
 
-// Scan when Enter is pressed
+// Enter key
 input.addEventListener("keydown", function(event) {
     if (event.key === "Enter") {
         checkLink();
