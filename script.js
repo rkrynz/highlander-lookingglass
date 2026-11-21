@@ -3,10 +3,17 @@ const input = document.getElementById("urlInput");
 const button = document.getElementById("scanButton");
 const results = document.getElementById("results");
 
+// Check whether a hostname belongs to an official domain
+function isOfficialDomain(hostname, domain) {
+    return hostname === domain ||
+           hostname.endsWith("." + domain);
+}
+
+// Scan the URL for suspicious signs
 function scanURL(inputText) {
     let url;
 
-    // Step 1: Validate the URL
+    // Step 1: Validate URL
     try {
         url = new URL(inputText.trim());
     } catch {
@@ -23,25 +30,26 @@ function scanURL(inputText) {
         };
     }
 
-    // Step 2: Find the website's hostname
+    // Step 2: Identify the actual domain
     const hostname = url.hostname.toLowerCase();
 
-    // Basic destination extraction for this prototype.
-    // This does not handle every domain suffix.
+    if (typeof tldts === "undefined") {
+        return {
+            type: "error",
+            message:
+                "The domain checker could not load.\n" +
+                "Please refresh the page and try again."
+        };
+    }
+
     const parsedDomain = tldts.parse(hostname);
     const destination = parsedDomain.domain || hostname;
+    const domainName = destination.split(".")[0];
 
-
-    // Step 3: Check whether the link belongs to UCR
-    const isUCR =
-        hostname === "ucr.edu" ||
-        hostname.endsWith(".ucr.edu");
-
-    // Step 4: Look for warning signs
     const warnings = [];
 
-        
-    const domainName = destination.split(".")[0];
+    // Step 3: Detect UCR impersonation
+    const isUCR = isOfficialDomain(hostname, "ucr.edu");
 
     const ucrLookalikes = [
         "ucrr",
@@ -69,38 +77,44 @@ function scanURL(inputText) {
         );
     }
 
-    if (url.username || url.password) {
-        warnings.push(
-            "This link may be hiding its real destination."
-        );
-    }
-
-    if (url.protocol === "http:") {
-        warnings.push(
-            "This link does not use HTTPS."
-        );
-    }
-
-    
-    // Detect fake Amazon, PayPal, and Microsoft websites
+    // Step 4: Detect other brand impersonation
     const brands = [
-        { name: "Amazon", domain: "amazon.com", keyword: "amazon" },
-        { name: "PayPal", domain: "paypal.com", keyword: "paypal" },
-        { name: "Microsoft", domain: "microsoft.com", keyword: "microsoft" }
+        {
+            name: "Amazon",
+            domain: "amazon.com",
+            keyword: "amazon"
+        },
+        {
+            name: "PayPal",
+            domain: "paypal.com",
+            keyword: "paypal"
+        },
+        {
+            name: "Microsoft",
+            domain: "microsoft.com",
+            keyword: "microsoft"
+        }
     ];
 
     brands.forEach(function(brand) {
-        const isOfficial =
-            hostname === brand.domain ||
-            hostname.endsWith("." + brand.domain);
+        const isOfficial = isOfficialDomain(
+            hostname,
+            brand.domain
+        );
 
-        // Normalize common character substitutions
         const simplifiedHost = hostname
             .replace(/-/g, "")
             .replace(/0/g, "o")
             .replace(/1/g, "l");
 
-        if (!isOfficial && simplifiedHost.includes(brand.keyword)) {
+        const hasBrandName =
+            simplifiedHost.includes(brand.keyword);
+
+        const isFakeAmazon =
+            brand.name === "Amazon" &&
+            simplifiedHost.includes("amazoon");
+
+        if (!isOfficial && (hasBrandName || isFakeAmazon)) {
             warnings.push(
                 "This link may be pretending to be " +
                 brand.name + "."
@@ -108,19 +122,49 @@ function scanURL(inputText) {
         }
     });
 
-    // Step 5: Create a simple result for students
+    // Step 5: Check for other suspicious signs
+    if (url.username || url.password) {
+        warnings.push(
+            "This link may be hiding its real destination " +
+            "using an @ symbol."
+        );
+    }
+
+    if (url.protocol === "http:") {
+        warnings.push(
+            "This website does not use HTTPS."
+        );
+    }
+
+    if (hostname.includes("xn--")) {
+        warnings.push(
+            "This link contains unusual characters " +
+            "that could disguise a website name."
+        );
+    }
+
+    // Step 6: Show easy-to-understand results
     if (warnings.length > 0) {
         return {
             type: "warning",
             message:
-                "⚠️ Suspicious Link!\n\n" +
-                warnings.join("\n") +
-                "\n\nWebsite shown in link: " + hostname +
-                "\nBasic destination: " + destination +
-                "\n\nWhat should you do?\n" +
-                "• Do not enter your password.\n" +
-                "• Do not click the suspicious link.\n" +
-                "• Visit the official website directly."
+                "⚠️ BE CAREFUL — SUSPICIOUS LINK\n\n" +
+                "We found " + warnings.length +
+                " warning sign(s).\n\n" +
+
+                "WHY WE FLAGGED IT:\n" +
+                warnings.map(function(warning) {
+                    return "• " + warning;
+                }).join("\n") +
+
+                "\n\nWHERE THIS LINK GOES:\n" +
+                destination +
+
+                "\n\nWHAT YOU SHOULD DO:\n" +
+                "• Don't open this link.\n" +
+                "• Don't enter your password.\n" +
+                "• Visit the official website yourself.\n" +
+                "• Report suspicious UCR emails to abuse@ucr.edu."
         };
     }
 
@@ -128,24 +172,35 @@ function scanURL(inputText) {
         return {
             type: "caution",
             message:
-                "UCR Domain Recognized\n\n" +
-                "This link uses an official UCR domain.\n" +
-                "Website: " + hostname +
-                "\n\nThis does not guarantee the page is safe."
+                "🔎 OFFICIAL UCR DOMAIN\n\n" +
+                "This link points to a ucr.edu website.\n\n" +
+
+                "WEBSITE:\n" +
+                hostname +
+
+                "\n\nREMEMBER:\n" +
+                "An official domain does not guarantee " +
+                "that every page or link is safe."
         };
     }
 
     return {
         type: "caution",
         message:
-            "No Obvious Warning Signs Found\n\n" +
-            "Website: " + hostname +
-            "\nBasic destination: " + destination +
-            "\n\nThis link has not been verified as safe.\n" +
-            "Be careful before entering personal information."
+            "🔎 NO OBVIOUS WARNING SIGNS\n\n" +
+            "We didn't find anything suspicious " +
+            "using our basic checks.\n\n" +
+
+            "WEBSITE:\n" +
+            destination +
+
+            "\n\nREMEMBER:\n" +
+            "This link has not been verified as safe.\n" +
+            "Be careful with passwords and personal information."
     };
 }
 
+// Display the result
 function checkLink() {
     const result = scanURL(input.value);
 
@@ -153,8 +208,10 @@ function checkLink() {
     results.textContent = result.message;
 }
 
+// Scan when button is clicked
 button.addEventListener("click", checkLink);
 
+// Scan when Enter is pressed
 input.addEventListener("keydown", function(event) {
     if (event.key === "Enter") {
         checkLink();
