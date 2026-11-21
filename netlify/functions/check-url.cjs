@@ -173,3 +173,11 @@ export const handler = async function (event) {
         clearTimeout(timeout);
     }
 };
+
+export const config = {
+    rateLimit: {
+        windowLimit: 10,
+        windowSize: 60,
+        aggregateBy: ["ip"]
+    }
+};
