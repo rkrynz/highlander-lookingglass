@@ -266,12 +266,58 @@ function scanURL(inputText) {
 }
 
 // Display the result
-function checkLink() {
+
+async function checkLink() {
     const result = scanURL(input.value);
 
     results.className = result.type;
     results.textContent = result.message;
+
+    if (result.type === "error") {
+        return;
+    }
+
+    let url = input.value.trim();
+
+    if (!url.includes("://")) {
+        url = "https://" + url;
+    }
+
+    results.textContent += "\n\nChecking Google's threat database...";
+
+    try {
+        const response = await fetch("/.netlify/functions/check-url", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ url: url })
+        });
+
+        if (!response.ok) {
+            throw new Error("API request failed");
+        }
+
+        const data = await response.json();
+
+        if (data.flagged) {
+            results.className = "warning";
+            results.textContent = "🚨 KNOWN DANGEROUS LINK\n\n" +
+                "Google Safe Browsing has identified this link as a threat.\n\n" +
+                "Do not visit this website or enter personal information.";
+        } else {
+            results.textContent = result.message +
+                "\n\nGOOGLE SAFE BROWSING:\n" +
+                "No known threat was found in Google's database.\n" +
+                "This does not guarantee the link is safe.";
+        }
+    } catch (error) {
+        results.textContent = result.message +
+            "\n\nGOOGLE SAFE BROWSING:\n" +
+            "Reputation check unavailable. Only basic checks were completed.";
+    }
 }
+
 
 // Scan when button is clicked
 button.addEventListener("click", checkLink);
