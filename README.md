@@ -40,6 +40,8 @@ The goal is to help students recognize phishing attempts before entering persona
   <img src="https://skillicons.dev/icons?i=html,css,js" alt="HTML, CSS, JavaScript" />
 </p>
 
+HTML · CSS · JavaScript
+
 ### Backend
 
 <p>
@@ -53,6 +55,9 @@ Netlify Functions · Google Safe Browsing API
 <p>
   <img src="https://skillicons.dev/icons?i=vscode,git,github" alt="VS Code, Git, GitHub" />
 </p>
+
+Visual Studio Code · Git · GitHub
+
 
 ---
 
