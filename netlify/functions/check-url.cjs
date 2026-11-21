@@ -175,9 +175,11 @@ export const handler = async function (event) {
 };
 
 export const config = {
+    path: "/.netlify/functions/check-url",
     rateLimit: {
+        action: "rate_limit",
         windowLimit: 10,
         windowSize: 60,
-        aggregateBy: ["ip"]
+        aggregateBy: ["ip", "domain"]
     }
 };
