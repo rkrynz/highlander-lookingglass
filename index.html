@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,13 +8,31 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Highlander LookingGlass</h1>
-    <p>See Through the Scam.</p>
+    <main class="container">
+        <h1>Highlander LookingGlass</h1>
+        <p class="subtitle">See Through the Scam.</p>
 
-    <input id="urlInput" type="text" placeholder="Paste a URL">
-    <button id="scanButton">Check Link</button>
+        <section class="scanner">
+            <h2>Is this link suspicious?</h2>
+            <p>Paste a website link below to check for warning signs.</p>
 
-    <div id="results"></div>
+            <input
+                id="urlInput"
+                type="text"
+                placeholder="https://example.com"
+                aria-label="Website URL"
+            >
+
+            <button id="scanButton">Check Link</button>
+
+            <div id="results" aria-live="polite"></div>
+        </section>
+
+        <p class="disclaimer">
+            LookingGlass checks for basic warning signs.
+            It cannot guarantee that a website is safe.
+        </p>
+    </main>
 
     <script src="script.js"></script>
 </body>
