@@ -143,11 +143,13 @@ function scanURL(inputText) {
             hostname,
             brand.domain
         );
+        
+    const simplifiedHost = domainName
+        .toLowerCase()
+        .replace(/-/g, "")
+        .replace(/0/g, "o")
+        .replace(/1/g, "l");
 
-        const simplifiedHost = hostname
-            .replace(/-/g, "")
-            .replace(/0/g, "o")
-            .replace(/1/g, "l");
 
         const hasBrandName =
             simplifiedHost.includes(brand.keyword);
@@ -167,7 +169,17 @@ function scanURL(inputText) {
             brand.name === "Amazon" &&
             simplifiedHost.includes("amazoon");
 
-        if (!isOfficial && (hasBrandName || isFakeAmazon || isCloseMatch)) {
+        
+        if (
+            !isOfficial &&
+            (
+                simplifiedHost === brand.keyword ||
+                simplifiedHost.startsWith(brand.keyword + "login") ||
+                simplifiedHost.startsWith(brand.keyword + "secure") ||
+                isFakeAmazon ||
+                isCloseMatch
+            )
+        ) {
             warnings.push(
                 "This link may be pretending to be " +
                 brand.name + "."
