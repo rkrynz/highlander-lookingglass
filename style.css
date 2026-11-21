@@ -116,3 +116,42 @@ button:hover {
         padding: 25px 18px;
     }
 }
+
+/* Scanner result improvements */
+
+#results {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 12px;
+    line-height: 1.7;
+    text-align: left;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+#results:empty {
+    display: none;
+}
+
+#results.warning {
+    background-color: #3d1825;
+    border: 2px solid #ff5c75;
+    color: #ffe3e8;
+}
+
+#results.caution {
+    background-color: #2b2440;
+    border: 2px solid #c5a3ff;
+    color: #f1e8ff;
+}
+
+#results.error {
+    background-color: #3d2915;
+    border: 2px solid #ffbd69;
+    color: #fff0d9;
+}
+
+#scanButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
