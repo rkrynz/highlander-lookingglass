@@ -40,9 +40,32 @@ function scanURL(inputText) {
     // Step 4: Look for warning signs
     const warnings = [];
 
-    if (hostname.includes("ucr") && !isUCR) {
+        
+    const domainName = destination.split(".")[0];
+
+    const ucrLookalikes = [
+        "ucrr",
+        "uc-r",
+        "ucr-login",
+        "ucrportal",
+        "myucr",
+        "rweb-ucr",
+        "ucrsecure"
+    ];
+
+    const isLookalike = ucrLookalikes.some(function(name) {
+        return domainName.includes(name);
+    });
+
+    const hasUCRName =
+        hostname.includes("ucr") ||
+        hostname.includes("uc-r") ||
+        hostname.includes("rweb");
+
+    if (!isUCR && (isLookalike || hasUCRName)) {
         warnings.push(
-            "This link may be pretending to be a UCR website."
+            "This website may be pretending to be UCR. " +
+            "Official UCR websites use ucr.edu."
         );
     }
 
