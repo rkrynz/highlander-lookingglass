@@ -81,6 +81,33 @@ function scanURL(inputText) {
         );
     }
 
+    
+    // Detect fake Amazon, PayPal, and Microsoft websites
+    const brands = [
+        { name: "Amazon", domain: "amazon.com", keyword: "amazon" },
+        { name: "PayPal", domain: "paypal.com", keyword: "paypal" },
+        { name: "Microsoft", domain: "microsoft.com", keyword: "microsoft" }
+    ];
+
+    brands.forEach(function(brand) {
+        const isOfficial =
+            hostname === brand.domain ||
+            hostname.endsWith("." + brand.domain);
+
+        // Normalize common character substitutions
+        const simplifiedHost = hostname
+            .replace(/-/g, "")
+            .replace(/0/g, "o")
+            .replace(/1/g, "l");
+
+        if (!isOfficial && simplifiedHost.includes(brand.keyword)) {
+            warnings.push(
+                "This link may be pretending to be " +
+                brand.name + "."
+            );
+        }
+    });
+
     // Step 5: Create a simple result for students
     if (warnings.length > 0) {
         return {
