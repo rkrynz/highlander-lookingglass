@@ -4,6 +4,32 @@ const button = document.getElementById("scanButton");
 const results = document.getElementById("results");
 
 // Check whether a hostname belongs to an official domain
+function editDistance(a, b) {
+    const dp = [];
+
+    for (let i = 0; i <= a.length; i++) {
+        dp[i] = [i];
+    }
+
+    for (let j = 1; j <= b.length; j++) {
+        dp[0][j] = j;
+    }
+
+    for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+
+            dp[i][j] = Math.min(
+                dp[i - 1][j] + 1,
+                dp[i][j - 1] + 1,
+                dp[i - 1][j - 1] + cost
+            );
+        }
+    }
+
+    return dp[a.length][b.length];
+}
+
 function isOfficialDomain(hostname, domain) {
     return hostname === domain ||
            hostname.endsWith("." + domain);
@@ -14,9 +40,18 @@ function scanURL(inputText) {
     let url;
 
     // Step 1: Validate URL
+    
     try {
-        url = new URL(inputText.trim());
+        let cleanedInput = inputText.trim();
+
+        // Automatically add https:// if no protocol is provided
+        if (!cleanedInput.includes("://")) {
+            cleanedInput = "https://" + cleanedInput;
+        }
+
+        url = new URL(cleanedInput);
     } catch {
+
         return {
             type: "error",
             message: "Please enter a valid link starting with https://"
@@ -47,6 +82,13 @@ function scanURL(inputText) {
     const domainName = destination.split(".")[0];
 
     const warnings = [];
+
+    if (url.protocol === "http:") {
+        warnings.push(
+            "This link uses HTTP instead of HTTPS. " +
+            "Your connection may not be encrypted."
+        );
+    }
 
     // Step 3: Detect UCR impersonation
     const isUCR = isOfficialDomain(hostname, "ucr.edu");
@@ -109,12 +151,23 @@ function scanURL(inputText) {
 
         const hasBrandName =
             simplifiedHost.includes(brand.keyword);
+        
+        const registeredName = destination
+            .split(".")[0]
+            .replace(/-/g, "")
+            .replace(/0/g, "o")
+            .replace(/1/g, "l");
+
+        const isCloseMatch =
+            registeredName !== brand.keyword &&
+            editDistance(registeredName, brand.keyword) <= 1;
+
 
         const isFakeAmazon =
             brand.name === "Amazon" &&
             simplifiedHost.includes("amazoon");
 
-        if (!isOfficial && (hasBrandName || isFakeAmazon)) {
+        if (!isOfficial && (hasBrandName || isFakeAmazon || isCloseMatch)) {
             warnings.push(
                 "This link may be pretending to be " +
                 brand.name + "."
