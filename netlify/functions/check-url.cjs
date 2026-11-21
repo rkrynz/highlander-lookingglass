@@ -2,52 +2,63 @@
 const MAX_URL_LENGTH = 2048;
 const API_TIMEOUT_MS = 8000;
 
-function jsonResponse(statusCode, data) {
-    return {
-        statusCode,
+function jsonResponse(data, status = 200) {
+    return new Response(JSON.stringify(data), {
+        status: status,
         headers: {
             "Content-Type": "application/json",
             "Cache-Control": "no-store"
-        },
-        body: JSON.stringify(data)
-    };
+        }
+    });
 }
 
-export const handler = async function (event) {
-    // Only accept POST requests
-    if (event.httpMethod !== "POST") {
-        return jsonResponse(405, {
+export default async function handler(request, context) {
+    // Only allow POST requests
+    if (request.method !== "POST") {
+        return jsonResponse({
             error: "Method not allowed"
-        });
+        }, 405);
     }
 
-    // Reject oversized requests
-    if ((event.body || "").length > 4096) {
-        return jsonResponse(413, {
+    // Check request size
+    const contentLength = request.headers.get("content-length");
+
+    if (contentLength && Number(contentLength) > 4096) {
+        return jsonResponse({
             error: "Request too large"
-        });
+        }, 413);
     }
 
-    // Validate request body
-    let submittedURL;
+    // Read JSON body
+    let body;
 
     try {
-        const body = JSON.parse(event.body || "{}");
-        submittedURL = body.url;
+        const rawBody = await request.text();
+
+        if (rawBody.length > 4096) {
+            return jsonResponse({
+                error: "Request too large"
+            }, 413);
+        }
+
+        body = JSON.parse(rawBody);
     } catch {
-        return jsonResponse(400, {
+        return jsonResponse({
             error: "Invalid JSON request"
-        });
+        }, 400);
     }
 
+    const submittedURL = body?.url;
+
+    // Validate URL input
     if (
         typeof submittedURL !== "string" ||
         submittedURL.length === 0 ||
         submittedURL.length > MAX_URL_LENGTH
     ) {
-        return jsonResponse(400, {
+        return jsonResponse({
             error: "Invalid URL"
-        });
+        }, 400);
     }
 
     let parsed;
@@ -55,51 +66,57 @@ export const handler = async function (event) {
     try {
         parsed = new URL(submittedURL);
     } catch {
-        return jsonResponse(400, {
+        return jsonResponse({
             error: "Invalid URL format"
-        });
+        }, 400);
     }
 
-    if (!["http:", "https:"].includes(parsed.protocol)) {
-        return jsonResponse(400, {
+    // Only allow websites
+    if (
+        parsed.protocol !== "http:" &&
+        parsed.protocol !== "https:"
+    ) {
+        return jsonResponse({
             error: "Only HTTP and HTTPS URLs are supported"
-        });
+        }, 400);
     }
 
-    // Avoid sending embedded credentials to Google
+    // Reject URLs containing credentials
     if (parsed.username || parsed.password) {
-        return jsonResponse(400, {
+        return jsonResponse({
             error: "URLs containing credentials are not supported"
-        });
+        }, 400);
     }
 
-    // Reject local/private destinations
     const hostname = parsed.hostname.toLowerCase();
 
+    // Reject local hostnames
     if (
         hostname === "localhost" ||
         hostname.endsWith(".localhost") ||
         hostname.endsWith(".local") ||
         !hostname.includes(".")
     ) {
-        return jsonResponse(400, {
+        return jsonResponse({
             error: "Please enter a public website URL"
-        });
+        }, 400);
     }
 
-    // Read private API key from Netlify
-    const apiKey = process.env.GOOGLE_SAFE_BROWSING_API_KEY;
+    // Get Google Safe Browsing API key
+    const apiKey = Netlify.env.get(
+        "GOOGLE_SAFE_BROWSING_API_KEY"
+    );
 
     if (!apiKey) {
-        return jsonResponse(503, {
+        return jsonResponse({
             error: "Reputation service not configured"
-        });
+        }, 503);
     }
 
-    // Stop requests that take too long
+    // Set timeout for Google API
     const controller = new AbortController();
 
-    const timeout = setTimeout(function () {
+    const timeout = setTimeout(function() {
         controller.abort();
     }, API_TIMEOUT_MS);
 
@@ -127,7 +144,9 @@ export const handler = async function (event) {
                         platformTypes: ["ANY_PLATFORM"],
                         threatEntryTypes: ["URL"],
                         threatEntries: [
-                            { url: parsed.href }
+                            {
+                                url: parsed.href
+                            }
                         ]
                     }
                 })
@@ -136,50 +155,53 @@ export const handler = async function (event) {
 
         if (!response.ok) {
             console.error(
-                "Safe Browsing API returned status:",
+                "Google Safe Browsing status:",
                 response.status
             );
 
-            return jsonResponse(502, {
+            return jsonResponse({
                 error: "Reputation service unavailable"
-            });
+            }, 502);
         }
 
         const data = await response.json();
 
-        return jsonResponse(200, {
-            flagged:
-                Array.isArray(data.matches) &&
-                data.matches.length > 0
+        const flagged =
+            Array.isArray(data.matches) &&
+            data.matches.length > 0;
+
+        return jsonResponse({
+            flagged: flagged
         });
 
     } catch (error) {
         if (error.name === "AbortError") {
-            return jsonResponse(504, {
+            return jsonResponse({
                 error: "Reputation check timed out"
-            });
+            }, 504);
         }
 
         console.error(
-            "Safe Browsing request failed:",
+            "Safe Browsing error:",
             error.message
         );
 
-        return jsonResponse(502, {
+        return jsonResponse({
             error: "Reputation service unavailable"
-        });
+        }, 502);
 
     } finally {
         clearTimeout(timeout);
     }
-};
+}
 
+// Netlify rate limiting
 export const config = {
     path: "/.netlify/functions/check-url",
     rateLimit: {
         action: "rate_limit",
         windowLimit: 10,
         windowSize: 60,
-        aggregateBy: ["ip", "domain"]
+        aggregateBy: ["ip"]
     }
 };
