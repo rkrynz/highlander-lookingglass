@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="assets/banner.png" alt="Highlander LookingGlass banner" width="100%" />
+</p>
 
 # Highlander LookingGlass
 
@@ -98,9 +101,17 @@ Basic URL checks run in the browser. Google Safe Browsing checks require the Net
 
 ## Disclaimer
 
-Highlander LookingGlass is an educational cybersecurity project and cannot guarantee that a website is safe.
+Highlander LookingGlass is an independent educational project
+created for Cutie Hack 2026.
 
-Always verify links before entering passwords, personal information, or other sensitive data.
+This project is not officially affiliated with, endorsed by,
+or sponsored by the University of California, Riverside (UCR).
+
+Any references to UCR are for educational and informational
+purposes only.
+
+Highlander LookingGlass cannot guarantee that a website is safe.
+Always verify links before entering sensitive information.
 
 ---
 
