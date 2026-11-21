@@ -1,92 +1,107 @@
 
 # Highlander LookingGlass
 
-### See Through the Scam.
+**See Through the Scam.**
 
-A phishing URL scanner designed to help UC Riverside students recognize suspicious websites and avoid online scams.
+A phishing URL scanner built to help UC Riverside students identify suspicious links and avoid online scams.
 
-Built for **Cutie Hack 2026**.
+Created for **Cutie Hack 2026**.
 
-## Live Demo
+[Live Website](https://highlander-lookingglass.netlify.app) · [GitHub Repository](https://github.com/rkrynz/highlander-lookingglass)
 
-**Website:** https://highlander-lookingglass.netlify.app
+---
 
 ## About
 
-College students regularly encounter suspicious emails, fake login pages, and phishing links.
+Highlander LookingGlass is a cybersecurity tool designed to make phishing detection simple and accessible.
 
-Highlander LookingGlass helps users identify potential threats before visiting a website. Simply paste a URL into the scanner to receive a risk assessment and an explanation of any warning signs.
+Users can paste a website link into the scanner to check for suspicious patterns, potential impersonation attempts, and known security threats.
 
-Our goal is to make phishing detection simple, accessible, and easy to understand.
+The goal is to help students recognize phishing attempts before entering personal information or passwords.
+
+---
 
 ## Features
 
-- **URL Scanner** — Analyzes website links for suspicious patterns.
-- **UCR Phishing Detection** — Identifies potential impersonations of official UCR websites.
-- **Brand Impersonation Detection** — Checks for suspicious domains imitating popular services.
+- **URL Scanner** — Checks links for suspicious patterns.
+- **UCR Impersonation Detection** — Identifies websites pretending to be official UCR pages.
+- **Brand Impersonation Detection** — Detects suspicious domains imitating popular services.
 - **Google Safe Browsing** — Checks URLs against Google's database of known threats.
-- **Risk Assessment** — Displays warnings and explains potential security risks.
-- **Security Tips** — Helps users understand how to avoid phishing attacks.
-- **Responsive Design** — Supports desktop and mobile devices.
+- **Risk Assessment** — Explains warning signs and provides safety recommendations.
+- **Responsive Design** — Works on desktop and mobile devices.
+
+---
+
+## Tech Stack
+
+### Frontend
+
+<p>
+  <img src="https://skillicons.dev/icons?i=html,css,js" alt="HTML, CSS, JavaScript" />
+</p>
+
+### Backend
+
+<p>
+  <img src="https://skillicons.dev/icons?i=netlify,googlecloud" alt="Netlify, Google Cloud" />
+</p>
+
+Netlify Functions · Google Safe Browsing API
+
+### Tools
+
+<p>
+  <img src="https://skillicons.dev/icons?i=vscode,git,github" alt="VS Code, Git, GitHub" />
+</p>
+
+---
 
 ## How It Works
 
 1. Paste a website URL into the scanner.
 2. Click **Check Link**.
-3. Highlander LookingGlass analyzes the URL for suspicious characteristics.
-4. A secure backend checks the URL using Google Safe Browsing.
-5. The website displays the results and recommended precautions.
+3. The scanner analyzes the URL for suspicious characteristics.
+4. A Netlify Function checks the URL using Google Safe Browsing.
+5. The scanner displays its findings and recommended precautions.
 
-A URL with no detected warning signs is not guaranteed to be safe.
+**Note:** A link with no detected warning signs is not guaranteed to be safe.
 
-## Tech Stack
+---
 
-**Frontend**
-- HTML
-- CSS
-- JavaScript
+## Getting Started
 
-**Backend**
-- Netlify Functions
-- Google Safe Browsing API
+Clone the repository:
 
-**Tools**
-- Visual Studio Code
-- Git & GitHub
-- Netlify
+```bash
+git clone https://github.com/rkrynz/highlander-lookingglass.git
+```
+
+Open the project in Visual Studio Code and launch `index.html` using a local development server.
+
+Basic URL checks run in the browser. Google Safe Browsing checks require the Netlify backend and a configured API key.
+
+---
 
 ## Security
 
-Google Safe Browsing requests are handled through a serverless Netlify Function.
+- Google Safe Browsing requests run through a serverless Netlify Function.
+- The API key is stored securely as an environment variable.
+- URLs are analyzed without automatically opening them in the user's browser.
+- Results include explanations to help users recognize potential threats.
 
-The API key is stored as a private environment variable rather than being exposed in frontend code.
-
-The scanner analyzes submitted URLs without automatically visiting them in the user's browser.
-
-## Run Locally
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/rkrynz/highlander-lookingglass.git
-   ```
-
-2. Open the project in Visual Studio Code.
-
-3. Open `index.html` using a local development server.
-
-The basic URL analysis runs in the browser. Google Safe Browsing checks require the configured Netlify backend.
+---
 
 ## Disclaimer
 
-Highlander LookingGlass is an educational cybersecurity project.
+Highlander LookingGlass is an educational cybersecurity project and cannot guarantee that a website is safe.
 
-It cannot guarantee that a website is safe or detect every phishing attempt. Users should always verify website addresses before entering passwords or personal information.
+Always verify links before entering passwords, personal information, or other sensitive data.
+
+---
 
 ## Hackathon
 
-**Event:** Cutie Hack 2026  
-**Project:** Highlander LookingGlass  
-**Theme:** Cybersecurity / Phishing Awareness
+**Cutie Hack 2026**  
+University of California, Riverside
 
-Made to help students see through the scam.
+Built to help students **see through the scam**.
