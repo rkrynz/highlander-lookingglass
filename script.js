@@ -294,6 +294,17 @@ async function checkLink() {
             signal: activeController.signal
         });
 
+        // Show a warning when the user exceeds the scan rate limit
+        if (response.status === 429) {
+            results.className = "caution";
+            results.textContent =
+                result.message +
+                "\n\n⏳ TOO MANY SCANS\n\n" +
+                "You've reached the scan limit.\n" +
+                "Please wait about a minute before trying again.";
+            return;
+        }
+
         if (!response.ok) {
             throw new Error("API request failed");
         }
