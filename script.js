@@ -28,8 +28,9 @@ function scanURL(inputText) {
 
     // Basic destination extraction for this prototype.
     // This does not handle every domain suffix.
-    const parts = hostname.split(".");
-    const destination = parts.slice(-2).join(".");
+    const parsedDomain = tldts.parse(hostname);
+    const destination = parsedDomain.domain || hostname;
+
 
     // Step 3: Check whether the link belongs to UCR
     const isUCR =
