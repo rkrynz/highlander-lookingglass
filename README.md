@@ -54,12 +54,11 @@ HTML · CSS · JavaScript
 Netlify Functions · Google Safe Browsing API
 
 ### Tools
-
 <p>
-  <img src="https://skillicons.dev/icons?i=vscode,git,github" alt="VS Code, Git, GitHub" />
+  <img src="https://skillicons.dev/icons?i=vscode,git,github,figma" alt="VS Code, Git, GitHub, Figma" />
 </p>
 
-Visual Studio Code · Git · GitHub
+Visual Studio Code · Git · GitHub · Figma
 
 
 ---
