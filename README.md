@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="Highlander LookingGlass banner" width="100%" />
+  <img src="assets/banner.png?v=2" alt="Highlander LookingGlass banner" width="100%">
 </p>
 
 # Highlander LookingGlass
