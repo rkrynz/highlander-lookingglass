@@ -1,40 +1,44 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Highlander LookingGlass</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#12102f">
+  <title>Highlander LookingGlass</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <main class="container">
-        <h1>Highlander LookingGlass</h1>
-        <p class="subtitle">See Through the Scam.</p>
-
-        <section class="scanner">
-            <h2>Is this link suspicious?</h2>
-            <p>Paste a website link below to check for warning signs.</p>
-
-            <input
-                id="urlInput"
-                type="text"
-                placeholder="Paste a link (e.g. ucr.edu)"
-                aria-label="Website URL"
-            >
-
-            <button id="scanButton">Check Link</button>
-
-            <div id="results" aria-live="polite" role="status"></div>
-        </section>
-
-        <p class="disclaimer">
-            LookingGlass checks for basic warning signs.
-            It cannot guarantee that a website is safe.
-        </p>
-    </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/tldts@7.0.22/dist/index.umd.min.js"></script>
-    <script src="script.js"></script>
+<body class="home">
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="header-inner"><a class="brand" href="index.html"><span class="lens" aria-hidden="true">✦</span>Highlander <em>LookingGlass</em></a>
+    <a class="button github-link" href="https://github.com/rkrynz/highlander-lookingglass">GitHub <span aria-hidden="true">↗</span></a>
+  </div>
+</header>
+<main id="main">
+  <section class="hero home-hero"><div class="scene" aria-hidden="true"><i class="moon"></i><i class="cloud left"></i><i class="cloud right"></i><span class="piece pale">♛</span><span class="piece pink">♚</span><span class="piece pawn-left">♟</span><span class="piece pawn-right">♞</span></div><div class="intro"><span class="eyebrow badge">✦ &nbsp;A Cutie Hack 2026 project</span><h1>See Through the <em>Scam.</em></h1><p>A phishing link checker for Highlanders. Paste a link to see where it leads and what looks suspicious.</p></div>
+    <section class="scanner" id="scanner" aria-labelledby="scanner-title">
+      <h2 id="scanner-title">Is this link suspicious?</h2>
+      <p>Paste a website link below to check for warning signs.</p>
+      <div class="scan-controls"><label class="sr-only" for="urlInput">Website URL</label><input id="urlInput" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste a link (e.g. ucr.edu)"><button class="button primary" id="scanButton" type="button">Check Link</button></div>
+      <p class="scan-note">The link is checked against Google Safe Browsing. LookingGlass never opens the page.</p>
+    </section>
+  </section>
+  <div id="results" class="wrap result" aria-live="polite" role="status"></div>
+  <section class="wrap section home-guide">
+    <div class="section-heading"><span class="eyebrow">What we look for</span><h2>One look in <em>the mirror.</em></h2></div>
+    <div class="grid cols-4"><article class="card"><span class="icon" aria-hidden="true">⌕</span><h3>See the real domain</h3><p>Find the domain behind a long or misleading URL.</p></article>
+<article class="card"><span class="icon" aria-hidden="true">♜</span><h3>Catch lookalikes</h3><p>Spot names that imitate UCR and familiar brands.</p></article>
+<article class="card"><span class="icon" aria-hidden="true">◇</span><h3>Check reputation</h3><p>See whether Google Safe Browsing flags a known threat.</p></article>
+<article class="card"><span class="icon" aria-hidden="true">✦</span><h3>Know what to do</h3><p>Get practical next steps based on the scan.</p></article></div>
+  </section>
+</main>
+<footer class="site-footer">
+  <div class="footer-inner"><a class="brand" href="index.html"><span class="lens" aria-hidden="true">✦</span>Highlander <em>LookingGlass</em></a>
+    <p>Built for Cutie Hack 2026 · Dream to Wonderland · Student project</p>
+    <div class="footer-links"><a href="https://github.com/rkrynz/highlander-lookingglass">GitHub</a><a href="https://highlander-lookingglass.netlify.app">Live site</a></div>
+  </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/tldts@7.0.22/dist/index.umd.min.js"></script>
+<script src="script.js"></script>
 </body>
 </html>

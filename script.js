@@ -213,76 +213,135 @@ function scanURL(inputText) {
         );
     }
 
-    if (warnings.length > 0) {
-        return {
-            type: "warning",
-            message:
-                "⚠️ SUSPICIOUS LINK\n\n" +
-                "Found " + warnings.length + " warning sign(s).\n\n" +
-                "WHY WE FLAGGED IT:\n" +
-                warnings.map(function(warning) {
-                    return "• " + warning;
-                }).join("\n") +
-                "\n\nACTUAL DOMAIN:\n" +
-                destination +
-                "\n\nRECOMMENDED ACTIONS:\n" +
-                "• Avoid opening this link.\n" +
-                "• Never enter your password on an unverified website.\n" +
-                "• Visit the official website directly.\n" +
-                "• Report suspicious UCR emails to abuse@ucr.edu."
-        };
-    }
-
-    if (isUCR) {
-        return {
-            type: "caution",
-            message:
-                "🔎 OFFICIAL UCR DOMAIN\n\n" +
-                "This URL belongs to the ucr.edu domain.\n\n" +
-                "WEBSITE:\n" +
-                hostname +
-                "\n\nREMEMBER:\n" +
-                "An official domain does not guarantee " +
-                "that every page is safe."
-        };
-    }
-
     return {
-        type: "caution",
-        message:
-            "🔎 NO OBVIOUS WARNING SIGNS\n\n" +
-            "No suspicious patterns were detected " +
-            "by our basic URL checks.\n\n" +
-            "DOMAIN:\n" +
-            destination +
-            "\n\nREMEMBER:\n" +
-            "This does not guarantee the website is safe."
+        type: warnings.length ? "warning" : "caution",
+        destination,
+        hostname,
+        isUCR,
+        warnings
     };
 }
 
-// Display scan results and check Google Safe Browsing
+function resultElement(tag, content, className) {
+    const element = document.createElement(tag);
+    element.textContent = content;
+    if (className) {
+        element.className = className;
+    }
+    return element;
+}
+
+function renderResult(result, reputation) {
+    results.className = "wrap result " + (reputation.flagged ? "warning" : result.type);
+    results.replaceChildren();
+
+    const isError = result.type === "error";
+    const isWarning = reputation.flagged || result.type === "warning";
+    let title = "No obvious warning signs.";
+    let summary = "The basic URL checks found no suspicious patterns.";
+
+    if (isError) {
+        title = "Check the link and try again.";
+        summary = result.message;
+    } else if (reputation.flagged) {
+        title = "Known dangerous link.";
+        summary = "Google Safe Browsing identified this URL as a known threat.";
+    } else if (isWarning) {
+        title = "Be careful — suspicious link.";
+        const count = result.warnings.length;
+        summary = count === 1 ? "Found 1 warning sign." : "Found " + count + " warning signs.";
+    } else if (result.isUCR) {
+        title = "Official UCR domain.";
+        summary = "This URL belongs to the ucr.edu domain.";
+    }
+
+    const heading = resultElement("div", "", "result-header");
+    const symbol = resultElement("span", isError || isWarning ? "!" : "✓", "result-symbol");
+    symbol.setAttribute("aria-hidden", "true");
+    const headingText = resultElement("div", "");
+    headingText.append(resultElement("span", "Link scan", "eyebrow"), resultElement("h2", title), resultElement("p", summary));
+    heading.append(symbol, headingText);
+    results.append(heading);
+
+    if (isError) {
+        return;
+    }
+
+    const destination = resultElement("div", "", "destination");
+    destination.append(resultElement("strong", "Actual domain "), resultElement("code", result.destination));
+    if (result.hostname !== result.destination) {
+        const hostname = resultElement("p", "Hostname ");
+        hostname.append(resultElement("code", result.hostname));
+        destination.append(hostname);
+    }
+
+    const details = resultElement("div", "", "result-detail");
+    const localChecks = resultElement("section", "", "card");
+    localChecks.append(resultElement("h3", result.warnings.length ? "Why we flagged it" : "Basic URL checks"));
+    if (result.warnings.length) {
+        const list = resultElement("ul", "");
+        for (const warning of result.warnings) {
+            list.append(resultElement("li", warning));
+        }
+        localChecks.append(list);
+    } else {
+        localChecks.append(resultElement("p", "No warning signs were detected in the URL itself."));
+    }
+
+    const nextSteps = resultElement("div", "");
+    const google = resultElement("section", "", "card");
+    google.append(resultElement("h3", reputation.title), resultElement("p", reputation.message));
+    const advice = resultElement("section", "", "card");
+    advice.append(resultElement("h3", "What to do next"));
+    if (isWarning) {
+        advice.append(resultElement("p", "Avoid this link. Visit the official site directly and only enter your password after verifying the address. Report suspicious UCR emails to "));
+        const report = resultElement("a", "abuse@ucr.edu");
+        report.href = "mailto:abuse@ucr.edu";
+        advice.lastChild.append(report, ".");
+    } else {
+        advice.append(resultElement("p", "Verify that the address is the one you intended to visit. Even an official domain or a clean result cannot guarantee a page is safe."));
+    }
+    nextSteps.append(google, advice);
+    details.append(localChecks, nextSteps);
+
+    const actions = resultElement("div", "", "result-actions");
+    const reset = resultElement("button", "Scan another link", "button");
+    reset.type = "button";
+    reset.addEventListener("click", function() {
+        input.value = "";
+        results.replaceChildren();
+        input.focus();
+    });
+    actions.append(reset);
+    if (reputation.pending) {
+        reset.disabled = true;
+    }
+    results.append(destination, details, actions);
+}
+
+// Display local results while the reputation check runs.
 async function checkLink() {
     if (button.disabled) {
         return;
     }
 
     const result = scanURL(input.value);
-
-    results.className = result.type;
-    results.textContent = result.message;
-
     if (result.type === "error") {
+        renderResult(result, {});
+        results.scrollIntoView({ block: "nearest" });
         return;
     }
 
     const url = parseURL(input.value);
-
     activeController = new AbortController();
-
     button.disabled = true;
     button.textContent = "Scanning...";
-
-    results.textContent += "\n\nChecking Google's threat database...";
+    renderResult(result, {
+        title: "Google Safe Browsing",
+        message: "Checking Google's threat database…",
+        pending: true
+    });
+    results.scrollIntoView({ block: "nearest" });
 
     try {
         const response = await fetch("/.netlify/functions/check-url", {
@@ -294,14 +353,11 @@ async function checkLink() {
             signal: activeController.signal
         });
 
-        // Show a warning when the user exceeds the scan rate limit
         if (response.status === 429) {
-            results.className = "caution";
-            results.textContent =
-                result.message +
-                "\n\n⏳ TOO MANY SCANS\n\n" +
-                "You've reached the scan limit.\n" +
-                "Please wait about a minute before trying again.";
+            renderResult(result, {
+                title: "Too many scans",
+                message: "You've reached the scan limit. Please wait about a minute before trying again."
+            });
             return;
         }
 
@@ -310,30 +366,19 @@ async function checkLink() {
         }
 
         const data = await response.json();
-
-        if (data.flagged) {
-            results.className = "warning";
-            results.textContent =
-                "🚨 KNOWN DANGEROUS LINK\n\n" +
-                "Google Safe Browsing identified this URL " +
-                "as a known threat.\n\n" +
-                "Do not visit this website or enter personal information.\n\n" +
-                "LOCAL URL CHECK:\n" +
-                result.message;
-        } else {
-            results.textContent =
-                result.message +
-                "\n\nGOOGLE SAFE BROWSING:\n" +
-                "No known threat was found in Google's database.\n" +
-                "This does not guarantee the website is safe.";
-        }
+        renderResult(result, {
+            title: "Google Safe Browsing",
+            flagged: data.flagged,
+            message: data.flagged
+                ? "This URL matched a known threat."
+                : "No known threat was found in Google's database."
+        });
     } catch (error) {
         if (error.name !== "AbortError") {
-            results.textContent =
-                result.message +
-                "\n\nGOOGLE SAFE BROWSING:\n" +
-                "Reputation check unavailable. " +
-                "Only basic URL checks were completed.";
+            renderResult(result, {
+                title: "Google Safe Browsing",
+                message: "Reputation check unavailable. Only basic URL checks were completed."
+            });
         }
     } finally {
         button.disabled = false;
