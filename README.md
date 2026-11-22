@@ -16,7 +16,7 @@ Created for **Cutie Hack 2026**.
 
 ## About
 
-Highlander LookingGlass is a cybersecurity tool designed to make phishing detection simple and accessible.
+Highlander Looking Glass is a cybersecurity tool designed to make phishing detection simple and accessible.
 
 Users can paste a website link into the scanner to check for suspicious patterns, potential impersonation attempts, and known security threats.
 
@@ -100,7 +100,7 @@ Basic URL checks run in the browser. Google Safe Browsing checks require the Net
 
 ## Disclaimer
 
-Highlander LookingGlass is an independent educational project
+Highlander Looking Glass is an independent educational project
 created for Cutie Hack 2026.
 
 This project is not officially affiliated with, endorsed by,
