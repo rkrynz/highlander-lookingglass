@@ -2,7 +2,7 @@
   <img src="assets/banner.png?v=2" alt="Highlander LookingGlass banner" width="100%">
 </p>
 
-# Highlander LookingGlass
+# Highlander Looking Glass
 
 **See Through the Scam.**
 
