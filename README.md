@@ -109,7 +109,7 @@ or sponsored by the University of California, Riverside (UCR).
 Any references to UCR are for educational and informational
 purposes only.
 
-Highlander LookingGlass cannot guarantee that a website is safe.
+Highlander Looking Glass cannot guarantee that a website is safe.
 Always verify links before entering sensitive information.
 
 ---
